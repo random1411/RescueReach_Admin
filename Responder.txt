@@ -1,0 +1,278 @@
+1. App Launch
+    └─ Checks for Active Internet Connection (Mandatory)
+        └─ If Not Available → Show Error → Retry
+
+2. Login Screen
+    ├─ Inputs:
+    │    ├─ Email (Assigned by Admin)
+    │    ├─ Password (Assigned by Admin)
+    ├─ Validates against Firebase Authentication
+    └─ If Valid:
+        ├─ Retrieves Assigned Role (Fire/Police/Medical) [Non-editable]
+        ├─ Proceeds to State Selection
+
+3. State Selection (After First Login)
+    ├─ Dropdown List of States (e.g., Maharashtra, Karnataka…)
+    └─ Saved in Firebase + Used to Filter Incoming Incidents
+
+4. Home Fragment (Default Landing)
+    ├─ Lists All Incidents Assigned by State + Role
+    │    ├─ Sorted by Newest First (Default)
+    │    ├─ Filter Options:
+    │    │    ├─ Priority: High (SOS), Medium (Detailed)
+    │    │    └─ Distance: Nearby First (within 5 km)
+    │    └─ Incident Cards:
+    │         ├─ SOS Alerts: Red Card + Emergency Tone
+    │         └─ Detailed Incident: Subdued Card + Softer Tone
+    ├─ Shows Count:
+    │    ├─ Total Incidents
+    │    ├─ Pending
+    │    └─ Resolved
+    └─ Clicking Card → Opens Incident Detail Screen
+
+5. Incident Details Screen
+    ├─ Information Displayed:
+    │    ├─ Citizen Phone Number
+    │    ├─ Emergency Contact Number
+    │    ├─ Location / Last Known Location
+    │    ├─ Media: Images & Audio (Viewable / Playable)
+    ├─ Buttons:
+    │    ├─ "On the Way"
+    │    └─ "Resolved" → Auto-Deletes Incident from Firebase
+    └─ Open Map → Google Maps Navigation (External Intent)
+
+6. Map View Fragment
+    ├─ Displays All Assigned Incidents on Map (within 5 km)
+    │    ├─ Red Icons → SOS
+    │    ├─ Subdued Icons → Detailed Incident
+    │    └─ Blue Icon → Responder's Location
+    ├─ Zoom In/Out + Search Bar
+    ├─ Manual Location Input (if Received via SMS)
+    └─ Optional: OSRM Integration (Planned, not active)
+
+7. Navigation Drawer
+    ├─ Home
+    ├─ Map View
+    ├─ Profile
+    └─ Logout
+
+8. Profile Fragment
+    ├─ Shows:
+    │    ├─ Email (Read-only)
+    │    ├─ Role (Read-only)
+    │    └─ State (Editable Dropdown)
+    ├─ Toggle:
+    │    └─ Active / Inactive Status
+    └─ Logout Button
+
+9. Firebase Sync
+    ├─ Incident Data Retrieved Based on:
+    │    ├─ Assigned Role
+    │    └─ Selected State
+    ├─ Updates Incident Statuses ("On the Way", "Resolved")
+    ├─ Deletes Resolved Incidents Automatically
+    └─ No Account Deletion Logic Required
+
+------------------------------------
+
+1. App Launch
+    ├─ Checks Internet Connection (Required)
+    └─ Proceeds to Login Screen
+
+2. Login Fragment
+    ├─ UI Fields:
+    │    ├─ Email (Admin Assigned) – Required
+    │    └─ Password (Admin Assigned) – Required
+    ├─ Firebase:
+    │    ├─ Auth → Validate Credentials
+    │    └─ Firestore → Fetch:
+    │         ├─ Role (fire/police/medical)
+    │         └─ Assigned State (if exists)
+    └─ If Role & State exist → Navigate to Home
+       Else → Navigate to State Selection
+
+3. State Selection Fragment (First-Time or Editable in Profile)
+    ├─ UI: Dropdown of States
+    ├─ Saved to Firestore under Responder Profile
+    └─ Used for Filtering Incoming Incidents by State
+
+4. Home Fragment
+    ├─ Firebase Integration:
+    │    ├─ Firestore: Listen to Incident Collection
+    │         └─ Filter By:
+    │              ├─ Incident State == Selected State
+    │              └─ Incident Type == Responder Role
+    ├─ UI:
+    │    ├─ Incident List View (RecyclerView)
+    │    │    ├─ Sorted by Timestamp DESC (Newest First)
+    │    │    ├─ Filter Option:
+    │    │    │    ├─ Priority
+    │    │    │    └─ Distance (5 km Nearby First using GeoFilter)
+    │    │    ├─ Incident Cards:
+    │    │    │    ├─ SOS → Red Card + Emergency Tone
+    │    │    │    └─ Detailed → Subdued Card + Softer Tone
+    │    └─ Stats View:
+    │         ├─ Total Incident Count
+    │         ├─ Pending Count
+    │         └─ Resolved Count
+
+5. Incident Details Fragment (Opened from Card)
+    ├─ UI:
+    │    ├─ Citizen Phone Number
+    │    ├─ Emergency Contact Number
+    │    ├─ Location + Timestamp
+    │    ├─ Media Attachments:
+    │    │    ├─ Images → Viewable
+    │    │    └─ Voice → Playable (MediaPlayer)
+    ├─ Buttons:
+    │    ├─ "On the Way" → Updates Firestore Status Field
+    │    └─ "Resolved" → Deletes Incident from Firestore
+    ├─ Navigation:
+    │    └─ External Intent to Google Maps
+    │         → Target = Citizen Location (LatLng)
+    │         → Optional Future Plan: OSRM SDK
+
+6. Map View Fragment
+    ├─ Firebase:
+    │    └─ Fetch Incidents Assigned (Role + State Based)
+    ├─ UI:
+    │    ├─ MapView (Google Maps)
+    │    │    ├─ Red Markers = SOS
+    │    │    ├─ Subdued Markers = Detailed
+    │    │    └─ Blue Marker = Responder's Location (5 km radius)
+    │    ├─ Zoom In / Out
+    │    ├─ Search Bar
+    │    └─ Manual Location Entry from SMS
+
+7. Profile Fragment
+    ├─ UI:
+    │    ├─ Email (Read-only)
+    │    ├─ Role (Read-only)
+    │    ├─ State (Dropdown – Editable)
+    │    └─ Toggle Switch (Active/Inactive)
+    ├─ Firebase:
+    │    ├─ Updates State on Selection Change
+    │    └─ Updates Availability Status
+
+8. Navigation Drawer Items
+    ├─ Home
+    ├─ Map View
+    ├─ Profile
+    └─ Logout
+
+9. Logout Logic
+    ├─ Firebase Auth → Sign Out
+    └─ Clears Local Session + Returns to Login
+
+10. Firebase Realtime DB & Firestore
+    ├─ Firestore:
+    │    ├─ Incident Collection:
+    │    │    ├─ Status ("Pending", "On the Way", "Resolved")
+    │    │    ├─ Role (fire/police/medical)
+    │    │    ├─ State (e.g., Maharashtra)
+    │    │    ├─ Timestamp
+    │    │    └─ Geo-coordinates
+    │    └─ Responder Profile Collection
+    │         ├─ Email
+    │         ├─ Role
+    │         ├─ Selected State
+    │         └─ Active Status
+    └─ Firebase Auth:
+         └─ Login / Logout Handling
+
+--------------------------------------
+1. App Launch
+    └── Internet Connection Required (Mandatory)
+
+2. Login Screen
+    ├── Inputs:
+    │   ├── Email (Assigned by Admin via Web Panel)
+    │   ├── Password (Assigned by Admin)
+    ├── Authenticates via Firebase Auth (Email/Pass)
+    └── On Success:
+        ├── Retrieves:
+        │   ├── Role (Fire, Police, Medical)
+        │   └── Assigned Email (Non-editable)
+        └── Navigates to Home Dashboard
+
+3. First Time State Selection (Post Login)
+    ├── Prompted to Select Current State
+    └── Saved in Firestore under Responder Profile
+        └── Used to Filter Incoming Alerts
+
+4. Navigation Drawer (Access from Top Left)
+    ├── Home (Incident Feed)
+    ├── Map View
+    ├── Filter
+    ├── Profile
+    ├── Total Incidents Received
+    └── Logout
+
+5. Home (Default Screen – Incident Feed)
+    ├── Shows Incidents Matching:
+    │   ├── Responder’s State
+    │   └── Responder’s Role (Fire, Police, Medical)
+    ├── Incident Cards:
+    │   ├── SOS Incident
+    │   │   ├── Red Card View
+    │   │   └── High Alert Tone
+    │   └── Detailed Incident
+    │       ├── Subdued Card View
+    │       └── Subdued Alert Tone
+    ├── Sort/Filter Options:
+    │   ├── Priority (High to Low)
+    │   ├── Distance (Nearest First)
+    │   └── Default: Newest on Top
+    └── Incident Count Display:
+        ├── Total
+        ├── Pending
+        └── Resolved
+
+6. Incident Detail Screen (On Tap of Any Incident Card)
+    ├── Full Details:
+    │   ├── User Phone Number
+    │   ├── Emergency Contact Number
+    │   ├── Type (SOS / Detailed)
+    │   ├── Timestamp, Location, Category
+    │   └── Media:
+    │       ├── Image (Zoom/Viewable)
+    │       └── Voice (In-App Playable)
+    ├── Map View:
+    │   ├── Incident Location (Red Icon for SOS, Subdued Icon for Detailed)
+    │   ├── Responder Location (Blue Icon)
+    │   ├── Last Known Location (If Needed)
+    │   └── Manual Input Option from SMS if no Coordinates
+    └── Actions:
+        ├── "On the Way" → Updates Firebase
+        └── "Resolved" → Auto-removes Incident from Firebase and Local View
+
+7. Map View (From Navigation Drawer or Incident Detail)
+    ├── Displays:
+    │   ├── All Nearby Incidents (Within 5 km Radius)
+    │   ├── Icons:
+    │   │   ├── Red = SOS
+    │   │   ├── Subdued = Detailed
+    │   │   └── Blue = Responder Location
+    ├── Map Controls:
+    │   ├── Zoom In / Zoom Out
+    │   └── Search / Navigate to SMS-based Location
+    └── Navigation Option:
+        ├── External Google Maps Intent (Current Default)
+        └── OSRM Integration (Marked as Future Optional)
+
+8. Profile Screen
+    ├── Display:
+    │   ├── Email (Non-editable)
+    │   ├── Role / Department (Non-editable)
+    │   └── Current Selected State (Editable Dropdown)
+    ├── Toggle:
+    │   └── Active / Inactive Status
+    └── Logout Button
+
+9. Total Incidents Received (Navigation Option)
+    └── Lists All Incidents Assigned to Responder (Until Resolved)
+
+10. Logout
+    ├── Clears Local Data (SharedPrefs, Cached)
+    └── Forces User to Login Again
+
